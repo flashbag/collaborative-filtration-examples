@@ -1,0 +1,27 @@
+{
+  "name": "collaborative-filtration-examples",
+  "version": "0.0.1",
+  "description": "JS Examples for book \"Programming Collective Intelligence\"",
+  "main": "index.js",
+  "dependencies": {
+    "faker": "^3.0.1",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flashbag/collaborative-filtration-examples.git"
+  },
+  "keywords": [
+    "collective",
+    "intelligence",
+    "collaborative",
+    "filtration"
+  ],
+  "author": "@flashbag",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/flashbag/collaborative-filtration-examples/issues"
+  },
+  "homepage": "https://github.com/flashbag/collaborative-filtration-examples#readme"
+}
