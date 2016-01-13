@@ -4,8 +4,13 @@
   "description": "JS Examples for book \"Programming Collective Intelligence\"",
   "main": "index.js",
   "dependencies": {
+    "async": "^1.5.2",
     "faker": "^3.0.1",
+    "nodemon": "^1.8.1",
     "underscore": "^1.8.3"
+  },
+  "scripts": {
+    "start": "nodemon -i data/ index.js"
   },
   "devDependencies": {},
   "repository": {
