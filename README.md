@@ -24,6 +24,8 @@ Script output will look like this:
 
 	    by euclideanDistance:    0.1558
 	    by pearson corelation:  -0.18519
+	    by jaccard index: 0.25
+
 
     "Amber Boyer" similar people by euclideanDistance: 
 
