@@ -16,23 +16,12 @@ function getRandScore() {
 
 // function to generate random person scores for items
 function personRandomScores(itemsArray) {
-	var randItems = _.first(_.shuffle(itemsArray), 5);
+	var randItems = _.first(_.shuffle(itemsArray), faker.random.number({min: 3, max: 6}));
 	return _.map(randItems, function (randItem) {
 		var item = _.clone(randItem);
 		item.score = getRandScore();
 		return item;
 	});  
-}
-
-// get person score by id
-function getPersonScores(personId, peopleScores) {
-	return _.flatten(_.map(_.filter(peopleScores, 
-		function filterIt(somePersonScore) {
-		return somePersonScore.person_id === personId;
-	}), function mapIt(scoreRecord) {
-		// console.log(scoreRecord);
-		return scoreRecord.scores;
-	}));
 }
 
 // passs error with optional callback
@@ -129,67 +118,6 @@ var generators = {
 
 };
 
-exports.commonPersonsScores = function (persons, peopleScores) {
-
-	if (!persons.length) {
-		throw new TypeError('persons array is invalid or empty');
-	} 
-
-	if (persons.length < 2) {
-		throw new TypeError('need to pass two persons');	
-	}
-	
-	var firstPerson = {
-		person: persons[0],
-		scores: getPersonScores(persons[0].person_id, peopleScores)
-	};
-
-	var secondPerson = {
-		person: persons[1],
-		scores: getPersonScores(persons[1].person_id, peopleScores)
-	};
-	
-	var commonScores = _.map(firstPerson.scores, function (firstScore) {
-		var secondPersonMatchedScore = _.first(_.filter(secondPerson.scores, function (secondScore) {
-			return firstScore.item_id === secondScore.item_id;
-		}));
-		// console.log(firstScore);
-		// console.log(secondPersonMatchedScore);
-		if (firstScore && secondPersonMatchedScore) {
-			return [
-				firstScore,
-				secondPersonMatchedScore
-			];
-		}
-		return false;
-	});
-
-	// filter falsy values
-	return _.compact(commonScores);
-};
-
-exports.personTopMatches = function (person, people, n, peopleScores, simCoeffFunction) {
-	var personWithPeopleScores = _.map(people, function (otherPerson) {
-		if (otherPerson.name === person.name) {
-			return false;
-		}
-		var personWithScore = _.clone(otherPerson);
-		var commonScores = exports.commonPersonsScores(
-			[person, otherPerson],
-			peopleScores
-		)
-		personWithScore.relativeScore = simCoeffFunction(commonScores);
-		// console.log('relativeScore:', personWithScore.relativeScore);
-		return personWithScore;
-	});
-
-	var sorted = _.sortBy(_.compact(personWithPeopleScores), function (p) { 
-		return p.relativeScore; 
-	}); 
-
-	return _.last(sorted, n).reverse();
-};
-
 exports.getData = function(callback) {
 
 	var parallelRead = {
@@ -261,4 +189,81 @@ exports.getData = function(callback) {
 		// data  = { scores: [ ... ], people: [ ... ], peopleScores: [ ... ] }
 		callback(null, data);
 	});
+};
+
+
+// PERSONS FUNCTIONS
+
+// two persons common scores
+exports.commonPersonsScores = function (persons, peopleScores) {
+
+	if (!persons.length) {
+		throw new TypeError('persons array is invalid or empty');
+	} 
+
+	if (persons.length < 2) {
+		throw new TypeError('need to pass two persons');	
+	}
+	
+	var firstPerson = {
+		person: persons[0],
+		scores: exports.getPersonScores(persons[0].person_id, peopleScores)
+	};
+
+	var secondPerson = {
+		person: persons[1],
+		scores: exports.getPersonScores(persons[1].person_id, peopleScores)
+	};
+	
+	var commonScores = _.map(firstPerson.scores, function (firstScore) {
+		var secondPersonMatchedScore = _.first(_.filter(secondPerson.scores, function (secondScore) {
+			return firstScore.item_id === secondScore.item_id;
+		}));
+		// console.log(firstScore);
+		// console.log(secondPersonMatchedScore);
+		if (firstScore && secondPersonMatchedScore) {
+			return [
+				firstScore,
+				secondPersonMatchedScore
+			];
+		}
+		return false;
+	});
+
+	// filter falsy values
+	return _.compact(commonScores);
+};
+
+// person top matches
+exports.personTopMatches = function (person, people, n, peopleScores, simCoeffFunction) {
+	var personWithPeopleScores = _.map(people, function (otherPerson) {
+		if (otherPerson.name === person.name) {
+			return false;
+		}
+		var personWithScore = _.clone(otherPerson);
+		var commonScores = exports.commonPersonsScores(
+			[person, otherPerson],
+			peopleScores
+		)
+		personWithScore.relativeScore = simCoeffFunction(commonScores);
+		// console.log('relativeScore:', personWithScore.relativeScore);
+		return personWithScore;
+	});
+
+	var sorted = _.sortBy(_.compact(personWithPeopleScores), function (p) { 
+		return p.relativeScore; 
+	}); 
+
+	return _.last(sorted, n).reverse();
+};
+
+// get person score by id
+exports.getPersonScores = function(personId, peopleScores) {
+	return _.flatten(_.map(_.filter(peopleScores, 
+		function filterIt(somePersonScore) {
+		return somePersonScore.person_id === personId;
+	}), function mapIt(scoreRecord) {
+		// console.log(scoreRecord);
+		return scoreRecord.scores;
+	}));
 };

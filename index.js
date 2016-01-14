@@ -22,6 +22,7 @@ dataHelper.getData(function(err, data) {
 	console.log('\n Persons similarity coefficients \n');
 	console.log('\t by euclideanDistance:', similarityCoefficient.euclideanDistance(personsCommonScores) );
 	console.log('\t by pearson corelation:', similarityCoefficient.pearsonCorelation(personsCommonScores) );
+	console.log('\t by jaccard index:', similarityCoefficient.jaccardIndex(twoRandPersons, data.peopleScores, personsCommonScores) );
 
 	
 	function printPersonTopMatches(personTopMatches) {
