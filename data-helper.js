@@ -16,9 +16,7 @@ function getRandScore() {
 
 // function to generate random person scores for items
 function personRandomScores(itemsArray) {
-	var randItems = _.first(
-		_.shuffle(itemsArray), faker.random.number({min: 3, max: 5})
-	);
+	var randItems = _.first(_.shuffle(itemsArray), 5);
 	return _.map(randItems, function (randItem) {
 		var item = _.clone(randItem);
 		item.score = getRandScore();
@@ -52,47 +50,7 @@ function passError(err, callback) {
 	}
 }
 
-// scopes generators
-var generators = {
-
-	// source entity
-	items: function () {
-	
-		var randomUniqTitles = _.uniq(_.times(faker.random.number({min: 10, max: 20}), function (n) {
-			return faker.hacker.ingverb();
-		}));
-		
-		return _.map(randomUniqTitles, function (uniqTitle, index) {
-			return { 
-				item_id: index,
-				title: uniqTitle
-			};
-		})
-	},
-
-	// source entity
-	people: function () {
-		// generate people which will be rate different items and producting scores
-		return _.times(faker.random.number({min: 10, max: 20}), function (n) {
-			return { 
-				person_id: n,
-				name: faker.name.findName() 
-			}; 	
-		});
-	},
-
-	// output entity
-	peopleScores: function (data) {
-		// generate random scores from each person
-		return _.map(data.people, function(unit) {
-			unit.scores = personRandomScores(data.items);
-			return unit;
-		});
-	}
-
-};
-
-exports.saveScope = function (scope, data, callback) {
+function saveScope(scope, data, callback) {
 
 	var dataStringified = JSON.stringify(data);
 
@@ -105,7 +63,7 @@ exports.saveScope = function (scope, data, callback) {
 	});
 };
 
-exports.readScope = function (scope, callback) {
+function readScope(scope, callback) {
 
 	var fullpath = path.join(dataDir, scope + '.json');
 
@@ -130,6 +88,45 @@ exports.readScope = function (scope, callback) {
 			}
 		},
 		], callback);	
+};
+
+// scopes generators
+var generators = {
+
+	// source entity
+	items: function () {
+	
+		var randomUniqTitles = _.uniq(_.times(faker.random.number({min: 10, max: 20}), function (n) {
+			return faker.hacker.ingverb();
+		}));
+		
+		return _.map(randomUniqTitles, function (uniqTitle, index) {
+			return { item_id: index, title: uniqTitle };
+		});
+	},
+
+	// source entity
+	people: function () {
+
+		var randomUniqNames = _.uniq(_.times(faker.random.number({min: 7, max: 14}), function (n) {
+			return faker.name.findName() ;
+		}));
+
+		// generate people which will be rate different items and producting scores
+		return _.map(randomUniqNames, function (uniqName, index) {
+			return { person_id: index, name: uniqName };
+		})
+	},
+
+	// output entity
+	peopleScores: function (data) {
+		// generate random scores from each person
+		return _.map(data.people, function(unit) {
+			unit.scores = personRandomScores(data.items);
+			return unit;
+		});
+	}
+
 };
 
 exports.commonPersonsScores = function (persons, peopleScores) {
@@ -171,23 +168,45 @@ exports.commonPersonsScores = function (persons, peopleScores) {
 	return _.compact(commonScores);
 };
 
+exports.personTopMatches = function (person, people, n, peopleScores, simCoeffFunction) {
+	var personWithPeopleScores = _.map(people, function (otherPerson) {
+		if (otherPerson.name === person.name) {
+			return false;
+		}
+		var personWithScore = _.clone(otherPerson);
+		var commonScores = exports.commonPersonsScores(
+			[person, otherPerson],
+			peopleScores
+		)
+		personWithScore.relativeScore = simCoeffFunction(commonScores);
+		// console.log('relativeScore:', personWithScore.relativeScore);
+		return personWithScore;
+	});
+
+	var sorted = _.sortBy(_.compact(personWithPeopleScores), function (p) { 
+		return p.relativeScore; 
+	}); 
+
+	return _.last(sorted, n).reverse();
+};
+
 exports.getData = function(callback) {
 
 	var parallelRead = {
 		items: function (cb) {
-			exports.readScope('items', cb);
+			readScope('items', cb);
 		},
 		people: function (cb) {
-			exports.readScope('people', cb);
+			readScope('people', cb);
 		}
 	};
 
 	var parallelCreate = {
 		items: function (cb) {
-			exports.saveScope('items', generators.items(), cb);
+			saveScope('items', generators.items(), cb);
 		},
 		people: function (cb) {
-			exports.saveScope('people', generators.people(), cb);
+			saveScope('people', generators.people(), cb);
 		},
 	};
 
@@ -218,12 +237,12 @@ exports.getData = function(callback) {
 			async.waterfall([
 				// read criticts
 				function (cb) {
-					exports.readScope('people-scores', cb);
+					readScope('people-scores', cb);
 				},
 				// generate if not exists
 				function (readedCritics, cb) {
 					if (!readedCritics) {
-						return exports.saveScope('people-scores', generators.peopleScores(data), cb);
+						return saveScope('people-scores', generators.peopleScores(data), cb);
 					} else {
 						cb(null, readedCritics);
 					}

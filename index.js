@@ -11,10 +11,6 @@ dataHelper.getData(function(err, data) {
 		throw _.isError(err) ? err : new Error(err);
 	}
 	
-	// console.log(data.items);
-	// console.log(data.people);
-	// console.log(data.peopleScores);
-
 	var twoRandPersons = _.first(_.shuffle(data.people), 2);
 	console.log('\n Two random persons:');
 	console.log(twoRandPersons);
@@ -27,8 +23,21 @@ dataHelper.getData(function(err, data) {
 	console.log('\t by euclideanDistance:', similarityCoefficient.euclideanDistance(personsCommonScores) );
 	console.log('\t by pearson corelation:', similarityCoefficient.pearsonCorelation(personsCommonScores) );
 
+	
+	function printPersonTopMatches(personTopMatches) {
+		_.each(personTopMatches, function (person) {
+			// console.log('\t ' + person.name);
+			// console.log('\t ' + person.relativeScore);
+			console.log('\t', person.name, ' \t \t \t ', person.relativeScore);
+		});
+	}
 
-	// var simCoeffEuclideanDistance = euclideanDistance(peopleCommonScores);
-	// console.log('\n Similarity Coefficient:', similarityCoefficient);
+	var topMatchesCount = 5;
+	var firstPersonTopMatches1 = dataHelper.personTopMatches(twoRandPersons[0], data.people, topMatchesCount, data.peopleScores, similarityCoefficient.euclideanDistance);
+	console.log('\n "' + twoRandPersons[0].name + '" similar people by euclideanDistance: \n');
+	printPersonTopMatches(firstPersonTopMatches1);
+
+	var firstPersonTopMatches2 = dataHelper.personTopMatches(twoRandPersons[0], data.people, topMatchesCount, data.peopleScores, similarityCoefficient.pearsonCorelation);
+	console.log('\n "' + twoRandPersons[0].name + '" similar people by pearson corelation: \n');
+	printPersonTopMatches(firstPersonTopMatches2);
 });
-// throw _.isError(err) ? err : new Error(err);
